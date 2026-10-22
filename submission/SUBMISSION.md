@@ -1,9 +1,9 @@
-# AETHER — Submission
+# AETHER ï¿½ Submission
 
 ## Links
 
-- **GitHub repo:** _paste your public repo URL here_
-- **Video:** _paste your YouTube/Vimeo public URL here_
+- **GitHub repo:** https://github.com/Mathew-Shelton-M/AETHER-Autonomous-Hiring-Agent-M/AETHER-Autonomous-Hiring-Agent
+- **Video:** https://youtu.be/jhm016UQm58
 - **Article:** _paste your AWS Builder Center article URL here_
 
 ## Tags
