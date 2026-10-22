@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AETHER — Recruitment Decision Support</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080E1C;
+  --surface: #0F1829;
+  --surface2: #162035;
+  --line: #1E2D4A;
+  --ink: #E4EAF6;
+  --mute: #7A8DAD;
+  --brand: #6366F1;
+  --brand-dim: #312E81;
+  --advance: #34D399;
+  --advance-bg: #052E1A;
+  --review: #FBBF24;
+  --review-bg: #2D1F02;
+  --decline: #F87171;
+  --decline-bg: #2D0808;
+  --neutral: #60A5FA;
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px/1.5 Inter, system-ui, sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ── Header ─────────────────────────────────────────────────── */
+header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; border-bottom: 1px solid var(--line);
+  background: var(--surface); flex-shrink: 0;
+}
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-mark {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--brand) 0%, #818CF8 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 15px; color: #fff;
+}
+.logo-text { font-weight: 700; font-size: 16px; letter-spacing: -.01em; }
+.logo-sub { font-size: 11px; color: var(--mute); font-weight: 400; }
+.header-meta { margin-left: auto; display: flex; gap: 16px; align-items: center; }
+.pill { font: 12px 'JetBrains Mono', monospace; padding: 3px 10px; border-radius: 99px; border: 1px solid var(--line); color: var(--mute); }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--advance); box-shadow: 0 0 8px var(--advance); }
+
+/* ── Layout ──────────────────────────────────────────────────── */
+main { display: grid; grid-template-columns: 1fr 420px; flex: 1; min-height: 0; gap: 0; }
+.pane { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); }
+.pane:last-child { border-right: none; }
+.pane-header { padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.pane-header h2 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--mute); }
+.pane-body { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+/* ── Chat messages ───────────────────────────────────────────── */
+.msg { padding: 10px 13px; border-radius: var(--radius); max-width: 90%; line-height: 1.5; white-space: pre-wrap; font-size: 14px; }
+.user { align-self: flex-end; background: var(--brand-dim); border: 1px solid var(--brand); }
+.bot  { align-self: flex-start; background: var(--surface2); border: 1px solid var(--line); }
+.bot .meta { color: var(--mute); font-size: 11px; margin-top: 6px; font-family: 'JetBrains Mono', monospace; }
+.thinking { color: var(--mute); font-style: italic; }
+
+/* ── Input bar ───────────────────────────────────────────────── */
+.input-bar { padding: 12px 16px; border-top: 1px solid var(--line); flex-shrink: 0; }
+.input-row { display: flex; gap: 8px; }
+.input-row input {
+  flex: 1; background: var(--surface2); color: var(--ink); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 10px 14px; font: inherit; outline: none;
+  transition: border-color .15s;
+}
+.input-row input:focus { border-color: var(--brand); }
+.send-btn {
+  background: var(--brand); color: #fff; border: none; border-radius: var(--radius);
+  padding: 0 18px; font: 600 14px Inter, sans-serif; cursor: pointer; transition: opacity .15s;
+}
+.send-btn:hover { opacity: .85; }
+.send-btn:disabled { opacity: .4; cursor: not-allowed; }
+.quick-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.qa-btn {
+  background: var(--surface2); border: 1px solid var(--line); color: var(--mute);
+  border-radius: 8px; padding: 5px 10px; font: 12px Inter, sans-serif; cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.qa-btn:hover { border-color: var(--brand); color: var(--ink); }
+
+/* ── Decision cards ──────────────────────────────────────────── */
+.dec-card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  overflow: hidden; animation: pop .3s ease;
+}
+@keyframes pop { from { transform: translateY(6px); opacity: 0; } to { transform: none; opacity: 1; } }
+.dec-header { padding: 10px 13px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); }
+.dec-header .title { font-weight: 600; font-size: 13px; flex: 1; }
+.dec-header .candidate { font-size: 12px; color: var(--mute); }
+.verdict-badge {
+  font: 600 11px 'JetBrains Mono', monospace; padding: 3px 10px; border-radius: 99px; border: 1px solid;
+}
+.verdict-advance { color: var(--advance); border-color: var(--advance); background: var(--advance-bg); }
+.verdict-review   { color: var(--review);  border-color: var(--review);  background: var(--review-bg);  }
+.verdict-decline  { color: var(--decline); border-color: var(--decline); background: var(--decline-bg); }
+.dec-body { padding: 10px 13px; display: flex; flex-direction: column; gap: 7px; }
+.prob-row { display: grid; grid-template-columns: 160px 1fr 48px; gap: 8px; align-items: center; }
+.prob-label { font: 12px 'JetBrains Mono', monospace; color: var(--mute); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+.bar-fill  { height: 100%; border-radius: 99px; transition: width .4s ease; }
+.prob-val  { font: 12px 'JetBrains Mono', monospace; text-align: right; }
+.dec-meta { padding: 8px 13px; border-top: 1px solid var(--line); display: flex; gap: 10px; flex-wrap: wrap; }
+.dec-meta span { font: 11px 'JetBrains Mono', monospace; color: var(--mute); }
+.human-flag { background: var(--review-bg); border: 1px solid var(--review); border-radius: 8px; padding: 6px 10px; font-size: 12px; color: var(--review); margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+.empty-state { color: var(--mute); font-size: 13px; text-align: center; margin: auto; }
+
+/* ── Confidence bar (overall) ────────────────────────────────── */
+.confidence-strip { display: flex; align-items: center; gap: 8px; padding: 8px 13px; border-top: 1px solid var(--line); }
+.conf-label { font: 11px 'JetBrains Mono', monospace; color: var(--mute); width: 90px; }
+.conf-track { flex: 1; height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+.conf-fill  { height: 100%; border-radius: 99px; }
+.conf-pct   { font: 11px 'JetBrains Mono', monospace; color: var(--mute); width: 36px; text-align: right; }
+
+/* ── Footer credit ───────────────────────────────────────────── */
+.credit { text-align: center; font-size: 11px; color: var(--mute); padding: 6px; border-top: 1px solid var(--line); flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">A</div>
+    <div>
+      <div class="logo-text">AETHER</div>
+      <div class="logo-sub">AI Recruitment Decision Support</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <span class="pill" id="pill-llm">LLM: —</span>
+    <span class="pill" id="pill-decider">Decider: —</span>
+    <span class="pill" id="pill-target">local</span>
+    <span class="status-dot" title="Online"></span>
+  </div>
+</header>
+
+<main>
+  <!-- Left: conversation -->
+  <div class="pane">
+    <div class="pane-header">
+      <h2>Recruiter Chat</h2>
+    </div>
+    <div class="pane-body" id="log">
+      <div class="msg bot">
+        Hello! I'm AETHER. I can help you evaluate candidates against job requirements.<br><br>
+        Try: <em>"What jobs are we hiring for?"</em> or <em>"Evaluate candidate C-101 for job JD-001"</em>
+      </div>
+    </div>
+    <div class="input-bar">
+      <div class="quick-actions">
+        <button class="qa-btn" onclick="send('What jobs are we hiring for?')">List jobs</button>
+        <button class="qa-btn" onclick="send('Evaluate C-101 for JD-001')">C-101 → JD-001</button>
+        <button class="qa-btn" onclick="send('Evaluate C-102 for JD-002')">C-102 → JD-002</button>
+        <button class="qa-btn" onclick="send('Evaluate C-105 for JD-002')">C-105 → JD-002</button>
+        <button class="qa-btn" onclick="send('Evaluate C-103 for JD-003')">C-103 → JD-003</button>
+      </div>
+      <div class="input-row">
+        <input id="msg-input" placeholder="Ask AETHER…" autocomplete="off">
+        <button class="send-btn" id="send-btn" onclick="sendInput()">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: decisions -->
+  <div class="pane" style="border-right:none;">
+    <div class="pane-header">
+      <h2>Strands Decider 2B — Evaluation Decisions</h2>
+    </div>
+    <div class="pane-body" id="dec-pane">
+      <div class="empty-state" id="empty-msg">
+        Evaluation decisions will appear here.<br>Ask AETHER to evaluate a candidate.
+      </div>
+    </div>
+    <div class="credit">Built with the AWS User Group Madurai Strands Decider hackathon kit</div>
+  </div>
+</main>
+
+<script>
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const log = document.getElementById("log");
+const decPane = document.getElementById("dec-pane");
+const input = document.getElementById("msg-input");
+const sendBtn = document.getElementById("send-btn");
+let sessionId = "aether-" + Math.random().toString(36).slice(2, 8);
+
+// Load header info
+fetch("/api/info").then(r => r.json()).then(i => {
+  document.getElementById("pill-llm").textContent = "LLM: " + i.llm;
+  document.getElementById("pill-decider").textContent = "Decider: " + i.decider;
+  document.getElementById("pill-target").textContent = i.target === "agentcore" ? "AgentCore Runtime" : "local agent";
+}).catch(() => {});
+
+function addMsg(cls, html) {
+  const d = document.createElement("div");
+  d.className = "msg " + cls;
+  d.innerHTML = html;
+  log.appendChild(d);
+  log.scrollTop = 1e9;
+  return d;
+}
+
+function verdictClass(v) {
+  if (!v) return "";
+  v = v.toLowerCase();
+  if (v.includes("advance")) return "advance";
+  if (v.includes("decline")) return "decline";
+  return "review";
+}
+
+function barColor(v, key) {
+  // For p_requirements_met and p_experience_sufficient: green if high, red if low
+  if (key && key.startsWith("p_")) return v >= 0.5 ? "#34D399" : "#F87171";
+  // fit_confidence: brand colour
+  return "#6366F1";
+}
+
+function renderDecision(rec) {
+  const empty = document.getElementById("empty-msg");
+  if (empty) empty.remove();
+
+  const verdict = rec.verdict || rec.outcome || "";
+  const vc = verdictClass(verdict);
+  const candidateName = rec.candidate || "";
+  const jobName = rec.job || "";
+
+  // Probability rows: p_requirements_met, p_experience_sufficient, fit_confidence
+  const probKeys = ["p_requirements_met", "p_experience_sufficient", "fit_confidence"];
+  const probRows = probKeys
+    .filter(k => typeof rec[k] === "number")
+    .map(k => {
+      const v = rec[k];
+      const pct = Math.round(v * 100);
+      return `<div class="prob-row">
+        <span class="prob-label">${esc(k.replace(/_/g, " "))}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${barColor(v, k)}"></div></div>
+        <span class="prob-val" style="color:${barColor(v, k)}">${v.toFixed(2)}</span>
+      </div>`;
+    }).join("");
+
+  // Confidence strip
+  const conf = rec.fit_confidence ?? null;
+  const confPct = conf !== null ? Math.round(conf * 100) : null;
+  const confColor = conf >= 0.7 ? "#34D399" : conf >= 0.5 ? "#FBBF24" : "#F87171";
+  const confStrip = conf !== null ? `
+    <div class="confidence-strip">
+      <span class="conf-label">Fit confidence</span>
+      <div class="conf-track"><div class="conf-fill" style="width:${confPct}%;background:${confColor}"></div></div>
+      <span class="conf-pct">${confPct}%</span>
+    </div>` : "";
+
+  // Human review flag
+  const humanFlag = rec.needs_human_review
+    ? `<div class="human-flag">⚠ Flagged for human review — recruiter decision required</div>`
+    : "";
+
+  // Meta row
+  const metaParts = [];
+  if (rec.evidence_quality) metaParts.push("evidence: " + rec.evidence_quality);
+  if (rec.decider_ms) metaParts.push(rec.decider_ms + " ms");
+  if (rec.pattern) metaParts.push(rec.pattern);
+
+  const card = document.createElement("div");
+  card.className = "dec-card";
+  card.innerHTML = `
+    <div class="dec-header">
+      <div>
+        <div class="title">${esc(candidateName || "Candidate")} → ${esc(jobName || "Role")}</div>
+        <div class="candidate">${esc(rec.fit_category || "")}</div>
+      </div>
+      <span class="verdict-badge verdict-${vc}">${esc(verdict)}</span>
+    </div>
+    <div class="dec-body">
+      ${probRows}
+      ${humanFlag}
+    </div>
+    ${confStrip}
+    <div class="dec-meta">${metaParts.map(p => `<span>${esc(p)}</span>`).join("")}</div>
+  `;
+  decPane.prepend(card);
+}
+
+async function send(text) {
+  if (!text.trim()) return;
+  input.value = "";
+  sendBtn.disabled = true;
+  addMsg("user", esc(text));
+  const wait = addMsg("bot", "<span class='thinking'>thinking…</span>");
+
+  try {
+    const r = await fetch("/api/chat", {
+      method: "POST",
+      headers: {"content-type": "application/json"},
+      body: JSON.stringify({message: text, session_id: sessionId})
+    });
+    const out = await r.json();
+    if (out.error) {
+      wait.innerHTML = `<span style="color:var(--decline)">${esc(out.error)}</span>`;
+    } else {
+      (out.decisions || []).forEach(renderDecision);
+      const n = (out.decisions || []).length;
+      wait.innerHTML = esc(out.reply) +
+        `<div class="meta">${out.latency_ms} ms · ${n} decision${n === 1 ? "" : "s"}` +
+        (out.served_by ? " · " + esc(out.served_by) : "") + `</div>`;
+    }
+  } catch (e) {
+    wait.innerHTML = `<span style="color:var(--decline)">Network error: ${esc(e.message)}</span>`;
+  }
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+function sendInput() {
+  send(input.value.trim());
+}
+
+input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendInput(); } });
+input.focus();
+</script>
+</body>
+</html>
